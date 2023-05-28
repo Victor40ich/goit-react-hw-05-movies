@@ -1,40 +1,76 @@
-import { FetchCasts } from "components/API/API";
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import PropTypes from 'prop-types';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { fetchMovieCast } from 'services/api';
+import Spinner from 'components/Loader';
+import {
+  Wrap,
+  CastTitle,
+  CastList,
+  CastListItem,
+  CastInfo,
+  CastName,
+  NoCastText,
+} from './Cast.styled';
 
 const Cast = () => {
-    const [casts, setCasts] = useState([]);
+  const { movieId } = useParams();
+  const [cast, setCast] = useState([]);
+  const [status, setStatus] = useState('pending');
+  const [error, setError] = useState(null);
 
-    const { id } = useParams();
+  useEffect(() => {
+    const fetchCast = async movieId => {
+      try {
+        const { cast } = await fetchMovieCast(movieId);
+        setCast(cast);
+        setStatus('resolved');
+      } catch (error) {
+        setError(error);
+        setStatus('rejected');
+      }
+    };
 
-    useEffect(() => {
-        FetchCasts(id).then(setCasts);
-    }, [id]);
+    fetchCast(movieId);
+  }, [movieId]);
 
-    return (
-        <ul className="cast-list">
-            {casts.map(({ profile_path, name, character, cast_id }) => (
-                <li className="list-group-item" key={cast_id}>
-                    <div className="col-sm-6 mb-3 mb-sm-0">
-                        <div className="card" style={{ width: '14rem' }}>
-                            <img src={profile_path ? `https://image.tmdb.org/t/p/w500/${profile_path}` : "./images/images.jpg"} className="card-img-top" alt={name} />
-                            <div className="card-body">
-                                <h5 className="card-text">{name}</h5>
-                                <p className="card-text">Character: {character}</p>
-                            </div>
-                        </div>
-                    </div>
-                </li>
-            ))}
-        </ul>
-    );
-};
-
-Cast.propTypes = {
-    profile_path: PropTypes.string,
-    name: PropTypes.string,
-    character: PropTypes.string
+  return (
+    <>
+      {status === 'pending' && <Spinner />}
+      {status === 'rejected' && <h3>{error.message}</h3>}
+      {status === 'resolved' && (
+        <Wrap>
+          <CastTitle>Cast</CastTitle>
+          {cast.length ? (
+            <CastList>
+              {cast.map(({ id, profile_path, name, character }) => (
+                <CastListItem key={id}>
+                  {profile_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w185${profile_path}`}
+                      alt={`${name}`}
+                    />
+                  ) : (
+                    <img
+                      src={`https://via.placeholder.com/185x278?text=No+Image`}
+                      alt={`${name}`}
+                    />
+                  )}
+                  <CastInfo>
+                    <CastName>{name}</CastName>
+                    <p>Character: {character}</p>
+                  </CastInfo>
+                </CastListItem>
+              ))}
+            </CastList>
+          ) : (
+            <NoCastText>
+              We don't have any information about the cast yet.
+            </NoCastText>
+          )}
+        </Wrap>
+      )}
+    </>
+  );
 };
 
 export default Cast;

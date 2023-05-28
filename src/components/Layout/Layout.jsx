@@ -1,16 +1,17 @@
-import React, { Suspense } from 'react'
-import { Header } from 'components/Header/Header';
-import { Outlet } from 'react-router-dom'
+import { Suspense } from 'react';
+import { Outlet } from 'react-router-dom';
+import Spinner from 'components/Loader';
+import Header from 'components/Header';
 
-export const Layout = () => {
-  return (
-    <>
-      <Header />
-      <Suspense fallback={<div>Loading...</div>}>
+const Layout = () => (
+  <>
+    <Header />
+    <Suspense fallback={<Spinner />}>
+      <main>
         <Outlet />
-      </Suspense>
-    </>
-  );
-};
+      </main>
+    </Suspense>
+  </>
+);
 
-
+export default Layout;
